@@ -1,10 +1,6 @@
 <template>
   <div class="appearance-switch d-flex gap-1">
-    <button
-      aria-label="Light mode"
-      :class="{ active: mode === 'light' }"
-      @click="setMode('light')"
-    >
+    <button aria-label="Light mode" :class="{ active: mode === 'light' }" @click="setMode('light')">
       <svg width="16" height="16" viewBox="0 0 16 16">
         <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
       </svg>
@@ -21,11 +17,7 @@
       </svg>
     </button>
 
-    <button
-      aria-label="Dark mode"
-      :class="{ active: mode === 'dark' }"
-      @click="setMode('dark')"
-    >
+    <button aria-label="Dark mode" :class="{ active: mode === 'dark' }" @click="setMode('dark')">
       <svg width="16" height="16" viewBox="0 0 16 16">
         <circle cx="8" cy="8" r="7" fill="currentColor" />
       </svg>
@@ -34,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import useAppearance, { type AppearanceMode } from '@/composables/useAppearance'
+import useAppearance from '@/composables/useAppearance'
 
 const { mode, setMode } = useAppearance()
 </script>
