@@ -3,7 +3,10 @@
     <div class="d-flex justify-center">
       <AppearanceSwitch />
     </div>
-    <p class="text-center">eschirtz</p>
+    <div class="py-6 my-6 text-center">
+      <h1 class="mt-6 text-primary">eschirtz</h1>
+      <p class="text-secondary mt-2">co-founder of samply.app</p>
+    </div>
   </div>
 </template>
 
