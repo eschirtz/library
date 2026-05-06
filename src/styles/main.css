@@ -16,4 +16,5 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  font-family: 'Inconsolata Variable', monospace;
 }
