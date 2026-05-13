@@ -9,8 +9,13 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import useAppearance from '@/composables/useAppearance'
+import useSamply from '@/composables/useSamply';
+
+const SAMPLY_CLIENT_TOKEN = "cf66c93b-5246-4414-b48a-80bdc8a4d6b1"
 
 useAppearance()
+useSamply(SAMPLY_CLIENT_TOKEN)
+
 </script>
 
 <style scoped>
