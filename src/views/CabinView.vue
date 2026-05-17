@@ -23,7 +23,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '@/firebase'
 import CloseLayout from '@/layouts/CloseLayout.vue'
 import { useGestures } from '@/composables/useGestures'
 import { useMapController } from '@/composables/useMapController'
@@ -54,6 +56,17 @@ const markers = reactive([
   { id: 'q3', x: 600, y: 400 },
 ])
 
+onMounted(async () => {
+  for (const marker of markers) {
+    const snap = await getDoc(doc(db, 'cabin', marker.id))
+    if (snap.exists()) {
+      const data = snap.data()
+      marker.x = data.x
+      marker.y = data.y
+    }
+  }
+})
+
 let activeMarker: (typeof markers)[number] | null = null
 
 function startMarkerDrag(e: PointerEvent, marker: (typeof markers)[number]) {
@@ -68,6 +81,9 @@ function onMarkerMove(e: PointerEvent) {
 }
 
 function onMarkerUp() {
+  if (activeMarker) {
+    setDoc(doc(db, 'cabin', activeMarker.id), { x: activeMarker.x, y: activeMarker.y })
+  }
   activeMarker = null
 }
 </script>
