@@ -130,8 +130,11 @@ export function useMapController(options: MapControllerOptions) {
     return `translate(${x.value}px, ${y.value}px) scale(${scale.value})`
   })
 
+  const readonlyScale = computed(() => scale.value)
+
   return {
     transform,
+    scale: readonlyScale,
     pan,
     panEnd,
     zoom,
