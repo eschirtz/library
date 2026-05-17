@@ -73,44 +73,58 @@ export function useGestures(
   // --- Touch handlers ---
   function onTouchStart(e: TouchEvent) {
     if (e.touches.length === 1) {
-      isDragging = true
-      lastX = e.touches[0].clientX
-      lastY = e.touches[0].clientY
-      lastTime = performance.now()
-      velocityX = 0
-      velocityY = 0
-      callbacks.onPanStart?.()
+      const touch = e.touches.item(0)
+      if (touch) {
+        isDragging = true
+        lastX = touch.clientX
+        lastY = touch.clientY
+        lastTime = performance.now()
+        velocityX = 0
+        velocityY = 0
+        callbacks.onPanStart?.()
+      }
     } else if (e.touches.length === 2) {
-      isDragging = false
-      initialPinchDistance = getDistance(e.touches[0], e.touches[1])
-      lastPinchDistance = initialPinchDistance
+      const t0 = e.touches.item(0)
+      const t1 = e.touches.item(1)
+      if (t0 && t1) {
+        isDragging = false
+        initialPinchDistance = getDistance(t0, t1)
+        lastPinchDistance = initialPinchDistance
+      }
     }
     e.preventDefault()
   }
 
   function onTouchMove(e: TouchEvent) {
     if (e.touches.length === 1 && isDragging) {
-      const now = performance.now()
-      const dt = now - lastTime || 16
-      const dx = e.touches[0].clientX - lastX
-      const dy = e.touches[0].clientY - lastY
+      const touch = e.touches.item(0)
+      if (touch) {
+        const now = performance.now()
+        const dt = now - lastTime || 16
+        const dx = touch.clientX - lastX
+        const dy = touch.clientY - lastY
 
-      velocityX = dx / dt * 16
-      velocityY = dy / dt * 16
+        velocityX = dx / dt * 16
+        velocityY = dy / dt * 16
 
-      lastX = e.touches[0].clientX
-      lastY = e.touches[0].clientY
-      lastTime = now
-      callbacks.onPan?.(dx, dy)
+        lastX = touch.clientX
+        lastY = touch.clientY
+        lastTime = now
+        callbacks.onPan?.(dx, dy)
+      }
     } else if (e.touches.length === 2) {
-      const dist = getDistance(e.touches[0], e.touches[1])
-      const scaleDelta = dist / lastPinchDistance
-      lastPinchDistance = dist
+      const t0 = e.touches.item(0)
+      const t1 = e.touches.item(1)
+      if (t0 && t1) {
+        const dist = getDistance(t0, t1)
+        const scaleDelta = dist / lastPinchDistance
+        lastPinchDistance = dist
 
-      const mid = getMidpoint(e.touches[0], e.touches[1])
-      const el = elementRef.value!
-      const rect = el.getBoundingClientRect()
-      callbacks.onZoom?.(scaleDelta, mid.x - rect.left, mid.y - rect.top)
+        const mid = getMidpoint(t0, t1)
+        const el = elementRef.value!
+        const rect = el.getBoundingClientRect()
+        callbacks.onZoom?.(scaleDelta, mid.x - rect.left, mid.y - rect.top)
+      }
     }
     e.preventDefault()
   }
@@ -121,12 +135,15 @@ export function useGestures(
       callbacks.onPanEnd?.(velocityX, velocityY)
     } else if (e.touches.length === 1) {
       // Went from pinch back to single finger
-      isDragging = true
-      lastX = e.touches[0].clientX
-      lastY = e.touches[0].clientY
-      lastTime = performance.now()
-      velocityX = 0
-      velocityY = 0
+      const touch = e.touches.item(0)
+      if (touch) {
+        isDragging = true
+        lastX = touch.clientX
+        lastY = touch.clientY
+        lastTime = performance.now()
+        velocityX = 0
+        velocityY = 0
+      }
     }
   }
 
