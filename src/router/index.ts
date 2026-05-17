@@ -13,6 +13,11 @@ const router = createRouter({
       component: () => import('@/views/SolarPunkView.vue'),
       meta: { title: 'Solar Punk' },
     },
+    {
+      path: '/cabin',
+      component: () => import('@/views/CabinView.vue'),
+      meta: { title: 'Cabin' },
+    },
   ],
 })
 

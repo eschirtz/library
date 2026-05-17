@@ -1,9 +1,9 @@
 <template>
+  <CloseLayout>
   <main class="py-6">
     <div class="mx-auto max-w-md pa-3">
       <div class="py-6 my-6 text-center">
         <h1 class="mt-6 text-primary">Solar Punk</h1>
-        <RouterLink to="/" class="text-secondary mt-4">back</RouterLink>
       </div>
       <ul class="box-list">
         <li v-for="box in boxes" :key="box.id" class="box-item py-3">
@@ -18,12 +18,13 @@
       </ul>
     </div>
   </main>
+  </CloseLayout>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import useSamply, { type Box } from '@/composables/useSamply'
+import CloseLayout from '@/layouts/CloseLayout.vue'
 
 const SOLAR_PUNK_PROJECT_LINK = 'https://next.samply.app/p/yH0bL2flLfLK28fMWSJK?si=2jTDpFGmKmUH2PyP9o3khIpRoRJ2'
 
