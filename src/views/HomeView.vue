@@ -5,11 +5,10 @@
     </div>
     <div class="py-6 my-6 text-center">
       <h1 class="mt-6 text-primary">eschirtz</h1>
-      <p class="text-secondary mt-2">co-founder of samply.app</p>
     </div>
     <div class="text-center d-flex flex-column gap-6">
-      <RouterLink v-for="view in views" :key="view.title" :to="view.link" class="text-secondary">{{
-        view.title
+      <RouterLink v-for="link in links" :key="link.title" :to="link.link" class="text-secondary">{{
+        link.title
       }}</RouterLink>
     </div>
   </main>
@@ -19,14 +18,18 @@
 import { RouterLink } from 'vue-router'
 import AppearanceSwitch from '@/components/AppearanceSwitch.vue'
 
-const views = [
+const links = [
+  {
+    title: 'cabin',
+    link: '/cabin',
+  },
   {
     title: 'solar punk',
     link: '/solar-punk',
   },
   {
-    title: 'cabin',
-    link: '/cabin',
+    title: 'samply.app',
+    link: 'https://samply.app',
   },
 ]
 </script>
