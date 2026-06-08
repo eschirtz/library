@@ -8,14 +8,16 @@ export interface SamplyPlayer {
 export const samply = {
   async load(playerId: string): Promise<SamplyPlayer> {
     const fb = useFirebase()
-    const playerBoxContent = await fb.getPlayerBoxContent(playerId)
-    console.log('Player box content', playerBoxContent)
+    const [boxData, playerDoc] = await Promise.all([
+      fb.getPlayerBoxContent(playerId),
+      fb.getPlayerDoc(playerId),
+    ])
 
-    const playerDoc = await fb.getPlayerDoc(playerId)
+    const projectDataDoc = await fb.getProjectSnippetDoc(playerDoc?.projectid)
+
+    console.log('Box data', boxData)
     console.log('Player doc', playerDoc)
-
-    const projectSnippetDoc = await fb.getProjectSnippetDoc(playerDoc?.projectid)
-    console.log('Project snippet doc', projectSnippetDoc)
+    console.log('Project snippet doc', projectDataDoc)
 
     return {
       destroy() {},
