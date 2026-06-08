@@ -7,7 +7,7 @@
       <h1 class="mt-6 text-primary">eschirtz</h1>
     </div>
     <div class="text-center d-flex flex-column gap-6">
-      <RouterLink v-for="link in links" :key="link.title" :to="link.link" class="text-secondary">{{
+      <RouterLink v-for="link in links" :key="link.title" :to="link.path" class="text-secondary">{{
         link.title
       }}</RouterLink>
     </div>
@@ -21,15 +21,11 @@ import AppearanceSwitch from '@/components/AppearanceSwitch.vue'
 const links = [
   {
     title: 'cabin',
-    link: '/cabin',
+    path: '/cabin',
   },
   {
     title: 'solar punk',
-    link: '/solar-punk',
-  },
-  {
-    title: 'samply.app',
-    link: 'https://samply.app',
+    path: '/solar-punk',
   },
 ]
 </script>
