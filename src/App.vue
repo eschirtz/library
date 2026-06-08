@@ -9,13 +9,15 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import useAppearance from '@/composables/useAppearance'
-import useSamply from '@/composables/useSamply';
-
-const SAMPLY_CLIENT_TOKEN = "cf66c93b-5246-4414-b48a-80bdc8a4d6b1"
+import { samply } from '@/sdk'
 
 useAppearance()
-useSamply(SAMPLY_CLIENT_TOKEN)
 
+const playerId = 'ICUKewfibcpDhzt91toA'
+
+samply.load(playerId).then((player) => {
+  console.log(player)
+})
 </script>
 
 <style scoped>
