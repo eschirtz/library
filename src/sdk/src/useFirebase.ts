@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFunctions, httpsCallable } from 'firebase/functions'
+import { doc, getDoc, getFirestore } from 'firebase/firestore'
 
 const samplyProductionFirestoreConfig = {
   apiKey: 'AIzaSyD5n1sk97CCHzdN3nLhzrrANGTnxEXfChY',
@@ -22,6 +23,7 @@ const Callables = {
 const fbApp = initializeApp(samplyProductionFirestoreConfig, SDK_APP_NAME)
 const fbAuth = getAuth(fbApp)
 const fbFunctions = getFunctions(fbApp)
+const fbFirestore = getFirestore(fbApp)
 
 async function init() {
   if (!fbAuth.currentUser) {
@@ -35,9 +37,24 @@ async function getPlayerBoxContent(playerId: string) {
   return resp.data
 }
 
+async function getPlayerDoc(playerId: string) {
+  const playerDoc = doc(fbFirestore, `players/${playerId}`)
+  const docSnap = await getDoc(playerDoc)
+  return docSnap.data()
+}
+
+async function getProjectSnippetDoc(projectId: string) {
+  console.log('Getting project snippet doc for projectId', projectId)
+  const projectSnippetDoc = doc(fbFirestore, `projects/${projectId}/public/snippet`)
+  const docSnap = await getDoc(projectSnippetDoc)
+  return docSnap.data()
+}
+
 export default function useFirebase() {
   return {
     init,
     getPlayerBoxContent,
+    getPlayerDoc,
+    getProjectSnippetDoc,
   }
 }
