@@ -2624,6 +2624,11 @@ semver@^7.6.3, semver@^7.7.3:
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.7.4.tgz#28464e36060e991fa7a11d0279d2d3f3b57a7e8a"
   integrity sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==
 
+shaka-player@^5.1.7:
+  version "5.1.7"
+  resolved "https://registry.yarnpkg.com/shaka-player/-/shaka-player-5.1.7.tgz#d4170e8ea479786a3cf86d935f677741af2b8d8a"
+  integrity sha512-NVWsrJlwsefAwLgd5N8e2rOOflZuTqW3YOxsJyW/iv/uaE1Ao7eiF5UZBoYx7ZVP4uWfHLA3RMJa1gFHHkwZVg==
+
 shebang-command@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/shebang-command/-/shebang-command-2.0.0.tgz#ccd0af4f8835fbdc265b82461aaf0c36663f34ea"

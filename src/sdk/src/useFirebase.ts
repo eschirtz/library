@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { doc, getDoc, getFirestore } from 'firebase/firestore'
+import type { GaplessManifests } from './data/buildQueue'
 
 const samplyProductionFirestoreConfig = {
   apiKey: 'AIzaSyD5n1sk97CCHzdN3nLhzrrANGTnxEXfChY',
@@ -18,6 +19,7 @@ const SDK_APP_NAME = 'samply-sdk'
 
 const Callables = {
   GET_SECURE_PLAYER_BOX_CONTENT: 'colab-getSecurePlayerBoxContent',
+  FIND_GAPLESS_MANIFESTS: 'colab-findGaplessManifests',
 }
 
 const fbApp = initializeApp(samplyProductionFirestoreConfig, SDK_APP_NAME)
@@ -44,10 +46,20 @@ async function getPlayerDoc(playerId: string) {
 }
 
 async function getProjectSnippetDoc(projectId: string) {
-  console.log('Getting project snippet doc for projectId', projectId)
   const projectSnippetDoc = doc(fbFirestore, `projects/${projectId}/public/snippet`)
   const docSnap = await getDoc(projectSnippetDoc)
   return docSnap.data()
+}
+
+async function findGaplessManifests(
+  boxids: string[],
+  projectid: string,
+  version: 'v1' | 'v2' = 'v1',
+): Promise<GaplessManifests | undefined> {
+  const fn = httpsCallable(fbFunctions, Callables.FIND_GAPLESS_MANIFESTS)
+  const resp = await fn({ boxids, projectid, gaplessVersion: version })
+  const data = resp.data as { manifests?: GaplessManifests }
+  return data.manifests
 }
 
 export default function useFirebase() {
@@ -56,5 +68,6 @@ export default function useFirebase() {
     getPlayerBoxContent,
     getPlayerDoc,
     getProjectSnippetDoc,
+    findGaplessManifests,
   }
 }
