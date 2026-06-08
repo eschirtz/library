@@ -1,4 +1,4 @@
-import { getApp, getApps, initializeApp } from 'firebase/app'
+import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 
@@ -19,47 +19,25 @@ const Callables = {
   GET_SECURE_PLAYER_BOX_CONTENT: 'colab-getSecurePlayerBoxContent',
 }
 
-function getSdkApp() {
-  return getApps().some((app) => app.name === SDK_APP_NAME)
-    ? getApp(SDK_APP_NAME)
-    : initializeApp(samplyProductionFirestoreConfig, SDK_APP_NAME)
-}
+const fbApp = initializeApp(samplyProductionFirestoreConfig, SDK_APP_NAME)
+const fbAuth = getAuth(fbApp)
+const fbFunctions = getFunctions(fbApp)
 
-function getSdkAuth() {
-  return getAuth(getSdkApp())
-}
-
-function getSdkFunctions() {
-  return getFunctions(getSdkApp())
-}
-
-let initialized: Promise<void> | null = null
-
-function initialize() {
-  if (!initialized) {
-    initialized = (async () => {
-      getSdkApp()
-      const auth = getSdkAuth()
-      if (!auth.currentUser) {
-        await signInAnonymously(auth)
-      }
-    })()
+async function init() {
+  if (!fbAuth.currentUser) {
+    await signInAnonymously(fbAuth)
   }
-  return initialized
+}
+
+async function getPlayerBoxContent(playerId: string) {
+  const getPlayerBoxes = httpsCallable(fbFunctions, Callables.GET_SECURE_PLAYER_BOX_CONTENT)
+  const resp = await getPlayerBoxes({ playerid: playerId })
+  return resp.data
 }
 
 export default function useFirebase() {
-  void initialize()
-
-  async function getPlayerBoxContent(playerId: string) {
-    await initialize()
-    const getPlayerBoxes = httpsCallable(getSdkFunctions(), Callables.GET_SECURE_PLAYER_BOX_CONTENT)
-
-    const resp = await getPlayerBoxes({ playerid: playerId })
-    return resp.data
-  }
-
   return {
+    init,
     getPlayerBoxContent,
   }
 }

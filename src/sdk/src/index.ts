@@ -7,7 +7,7 @@ export interface SamplyPlayer {
 
 export const samply = {
   async load(playerId: string): Promise<SamplyPlayer> {
-    const { getPlayerBoxContent } = useFirebase()
+    const { getPlayerBoxContent } = await useFirebase()
     const playerBoxContent = await getPlayerBoxContent(playerId)
     console.log('Player box content', playerBoxContent)
 
