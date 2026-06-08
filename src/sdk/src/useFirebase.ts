@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getAuth, signInAnonymously } from 'firebase/auth'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { doc, getDoc, getFirestore } from 'firebase/firestore'
-import type { GaplessManifests } from './data/buildQueue'
+import type { GaplessManifests, SortPreference } from './data/buildQueue'
 
 const samplyProductionFirestoreConfig = {
   apiKey: 'AIzaSyD5n1sk97CCHzdN3nLhzrrANGTnxEXfChY',
@@ -33,10 +33,16 @@ async function init() {
   }
 }
 
-async function getPlayerBoxContent(playerId: string) {
+interface PlayerBoxContentRaw {
+  boxes: Array<{ id: string; data: Record<string, unknown> }>
+  sortBy: SortPreference
+  sortOrder?: { [boxid: string]: number }
+}
+
+async function getPlayerBoxContent(playerId: string): Promise<PlayerBoxContentRaw> {
   const getPlayerBoxes = httpsCallable(fbFunctions, Callables.GET_SECURE_PLAYER_BOX_CONTENT)
   const resp = await getPlayerBoxes({ playerid: playerId })
-  return resp.data
+  return resp.data as PlayerBoxContentRaw
 }
 
 async function getPlayerDoc(playerId: string) {

@@ -6,6 +6,7 @@ import {
   type RawBox,
   type PlayerMeta,
   type ProjectMeta,
+  type SortPreference,
 } from './buildQueue'
 import { Queue } from '../engine/queue'
 import { gaplessVersion } from '../engine/platform'
@@ -20,7 +21,11 @@ export async function fetchPlayer(playerId: string): Promise<PlayerData> {
   const fb = useFirebase()
 
   const [boxResult, playerDoc] = await Promise.all([
-    fb.getPlayerBoxContent(playerId) as Promise<{ boxes: RawBox[] }>,
+    fb.getPlayerBoxContent(playerId) as Promise<{
+      boxes: RawBox[]
+      sortBy: SortPreference
+      sortOrder?: { [boxid: string]: number }
+    }>,
     fb.getPlayerDoc(playerId),
   ])
 
@@ -31,6 +36,8 @@ export async function fetchPlayer(playerId: string): Promise<PlayerData> {
     artist: playerDoc?.artist,
     artwork: playerDoc?.artwork,
     config: playerDoc?.config,
+    boxids: playerDoc?.boxids ?? [],
+    groupid: playerDoc?.groupid ?? '',
   }
 
   const projectDoc = await fb.getProjectSnippetDoc(playerMeta.projectid)
@@ -39,7 +46,13 @@ export async function fetchPlayer(playerId: string): Promise<PlayerData> {
     artwork: projectDoc?.artwork,
   }
 
-  let items = buildQueueItems(boxResult.boxes ?? [], playerMeta, projectMeta)
+  let items = buildQueueItems(
+    boxResult.boxes ?? [],
+    playerMeta,
+    projectMeta,
+    boxResult.sortBy,
+    boxResult.sortOrder,
+  )
 
   // Attempt to fetch gapless manifests for multi-track players
   const queue = new Queue()

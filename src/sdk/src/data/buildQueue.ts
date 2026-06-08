@@ -6,8 +6,6 @@ import type { QueueItem, GaplessSrc } from '../engine/queue'
 interface HlsAsset {
   url?: string
   cdnUrl?: string
-  playlist?: string
-  media?: string
 }
 
 interface HlsSource {
@@ -22,8 +20,18 @@ interface LoudnessMetadata {
   truePeak?: number
 }
 
-interface AudioBoxData {
+interface ChildRef {
+  /** Firestore path string e.g. "projects/abc/boxes/def" */
+  ref?: string
   name?: string
+}
+
+interface BoxData {
+  type?: 'file' | 'stack' | 'group'
+  name?: string
+  mimeType?: string
+  /** Stack and group boxes have children keyed by push-ID (sorted alphanumerically = chronological) */
+  children?: { [pushKey: string]: ChildRef }
   audio?: {
     hls?: HlsSource
     metadata?: { original?: { title?: string; album?: string; artist?: string } }
@@ -33,8 +41,9 @@ interface AudioBoxData {
 
 export interface RawBox {
   id: string
+  /** Stack-level name override (set by the parent stack's child entry, not the file itself) */
   name?: string
-  data: AudioBoxData
+  data: BoxData
 }
 
 export interface PlayerMeta {
@@ -44,6 +53,10 @@ export interface PlayerMeta {
   artist?: string
   artwork?: ImageSet
   config?: { preferMetadata?: boolean }
+  /** Ordered list of top-level box IDs for this player */
+  boxids?: string[]
+  /** If set, restrict display to children of this group */
+  groupid?: string
 }
 
 export interface ProjectMeta {
@@ -59,6 +72,11 @@ interface ImageSet {
   small?: ImageEntry
   medium?: ImageEntry
   large?: ImageEntry
+}
+
+export interface SortPreference {
+  criterion: string
+  ascending: boolean
 }
 
 export interface GaplessManifestEntry {
@@ -95,34 +113,142 @@ function resolveSrc(hls?: HlsSource): { aac?: string; flac?: string } {
   return { aac, flac }
 }
 
-// ── Queue building ───────────────────────────────────────────────────────────
+// ── Children helpers ─────────────────────────────────────────────────────────
+
+/** Children of a box, sorted alphanumerically by push-key (oldest → newest) */
+function sortedChildIds(box: RawBox): string[] {
+  const children = box.data.children
+  if (!children) return []
+  return Object.keys(children)
+    .sort()
+    .map((k) => {
+      const ref = children[k]?.ref
+      return ref ? ref.split('/').pop() : undefined
+    })
+    .filter((id): id is string => !!id)
+}
+
+/** The newest child of a stack (highest push-key = most recent version) */
+function peekStack(box: RawBox): string | undefined {
+  const ids = sortedChildIds(box)
+  return ids[ids.length - 1]
+}
+
+// ── Box → QueueItem(s) ───────────────────────────────────────────────────────
+
+function audioFileToItem(
+  box: RawBox,
+  player: PlayerMeta,
+  stackId?: string,
+  stackName?: string,
+): QueueItem | undefined {
+  if (!box.data.audio) return undefined // not an audio box
+  const { aac, flac } = resolveSrc(box.data.audio.hls)
+  if (!aac) return undefined
+
+  const meta = box.data.audio.metadata?.original
+  const preferMeta = player.config?.preferMetadata
+  const name = preferMeta && meta?.title ? meta.title : stackName || box.name || box.data.name || ''
+
+  return {
+    // Use stack ID as the track identity so the caller can reference the top-level box
+    id: stackId ?? box.id,
+    // Use the actual audio file ID for gapless manifest requests
+    audioboxid: box.id,
+    src: { aac, ...(flac ? { flac } : {}) },
+    name,
+    loudness: box.data.audio.loudness,
+  }
+}
+
+function processBox(
+  box: RawBox,
+  byId: Map<string, RawBox>,
+  player: PlayerMeta,
+): QueueItem[] {
+  const type = box.data.type
+
+  if (type === 'stack') {
+    const topChildId = peekStack(box)
+    const topChild = topChildId ? byId.get(topChildId) : undefined
+    if (!topChild) return []
+    const item = audioFileToItem(topChild, player, box.id, box.name || box.data.name)
+    return item ? [item] : []
+  }
+
+  if (type === 'group') {
+    // Flatten group children in push-key order
+    const items: QueueItem[] = []
+    for (const childId of sortedChildIds(box)) {
+      const child = byId.get(childId)
+      if (child) items.push(...processBox(child, byId, player))
+    }
+    return items
+  }
+
+  if (type === 'file') {
+    const item = audioFileToItem(box, player)
+    return item ? [item] : []
+  }
+
+  return []
+}
+
+// ── Public API ───────────────────────────────────────────────────────────────
 
 export function buildQueueItems(
   boxes: RawBox[],
   player: PlayerMeta,
   _project: ProjectMeta,
+  sortBy?: SortPreference,
+  sortOrder?: { [boxid: string]: number },
 ): QueueItem[] {
-  const items: QueueItem[] = []
+  // Build id → box and child → parent lookup tables
+  const byId = new Map<string, RawBox>()
+  const isChildOf = new Map<string, string>() // childId → parentId
 
   for (const box of boxes) {
-    const { aac, flac } = resolveSrc(box.data.audio?.hls)
-    if (!aac) continue // not playable, skip
-
-    const meta = box.data.audio?.metadata?.original
-    const preferMeta = player.config?.preferMetadata
-    const name =
-      (preferMeta && meta?.title) ? meta.title : box.name || box.data.name || ''
-
-    const item: QueueItem = {
-      id: box.id,
-      audioboxid: box.id,
-      src: { aac, ...(flac ? { flac } : {}) },
-      name,
-      loudness: box.data.audio?.loudness,
+    byId.set(box.id, box)
+    if (box.data.children) {
+      for (const child of Object.values(box.data.children)) {
+        const ref = child?.ref
+        const childId = ref ? ref.split('/').pop() : undefined
+        if (childId) isChildOf.set(childId, box.id)
+      }
     }
-    items.push(item)
   }
 
+  // Determine the ordered list of top-level box IDs
+  let topLevelIds: string[]
+
+  if (player.groupid) {
+    // Restrict to children of the specified group
+    const group = byId.get(player.groupid)
+    topLevelIds = sortedChildIds(group ?? { id: '', data: {} })
+  } else {
+    // All top-level boxes (not children of any other box)
+    topLevelIds = boxes.filter((b) => !isChildOf.has(b.id)).map((b) => b.id)
+  }
+
+  // Apply sort order from callable
+  if (sortBy?.criterion === 'custom' && sortOrder) {
+    topLevelIds.sort((a, b) => (sortOrder[a] ?? 0) - (sortOrder[b] ?? 0))
+  } else if (sortBy?.criterion === 'name') {
+    topLevelIds.sort((a, b) => {
+      const nameA = byId.get(a)?.data.name ?? ''
+      const nameB = byId.get(b)?.data.name ?? ''
+      const cmp = nameA.localeCompare(nameB)
+      return (sortBy.ascending ?? true) ? cmp : -cmp
+    })
+  }
+  // else: use natural order returned by callable
+
+  const items: QueueItem[] = []
+  for (const id of topLevelIds) {
+    const box = byId.get(id)
+    if (!box) continue
+    items.push(...processBox(box, byId, player))
+  }
   return items
 }
 

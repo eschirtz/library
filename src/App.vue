@@ -9,15 +9,8 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import useAppearance from '@/composables/useAppearance'
-import { samply } from '@/sdk'
 
 useAppearance()
-
-const playerId = 'ICUKewfibcpDhzt91toA'
-
-samply.load(playerId).then((player) => {
-  console.log(player)
-})
 </script>
 
 <style scoped>

@@ -81,7 +81,7 @@ import CloseLayout from '@/layouts/CloseLayout.vue'
 import { samply } from '@/sdk/src/index'
 import type { SamplyPlayer, PlayerState } from '@/sdk/src/types'
 
-const PLAYER_ID = 'yH0bL2flLfLK28fMWSJK'
+const PLAYER_ID = 'bnxyCivYeZB9yldipR9H'
 
 const status = ref<'loading' | 'ready' | 'error'>('loading')
 const player = ref<SamplyPlayer | null>(null)
